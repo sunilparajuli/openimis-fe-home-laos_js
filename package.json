@@ -1,6 +1,6 @@
 {
   "name": "@openimis/fe-home",
-  "version": "1.2.0-rc3",
+  "version": "1.4.0-rc2",
   "license": "AGPL-3.0-only",
   "description": "openIMIS Frontend Home reference module",
   "repository": "openimis/openimis-fe-home_js",
