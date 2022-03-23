@@ -1,11 +1,13 @@
-import { HomePage } from "./components/HomePage";
+import HomePage from "./pages/HomePage";
+
+import HomePageContainer from "./components/HomePageContainer";
 
 const DEFAULT_CONFIG = {
-  "core.Router": [
-    { path: "home", component: HomePage },
-  ]
-}
+  "core.Router": [{ path: "home", component: HomePage }],
+  "home.HomePage.Container": HomePageContainer,
+  "home.HomePage.Blocks": [],
+};
 
 export const HomeModule = (cfg) => {
-  return { ...DEFAULT_CONFIG, ...(cfg && cfg['fe-home'] || {}) };
-}
+  return { ...DEFAULT_CONFIG, ...((cfg && cfg["fe-home"]) || {}) };
+};
