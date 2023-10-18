@@ -10,26 +10,46 @@ import {
   useModulesManager,
   useTranslations,
 } from "@openimis/fe-core";
-import { DEFAULT, MODULE_NAME } from "../constants";
+import { useSelector } from "react-redux";
+
+import { DEFAULT, MODULE_NAME, DAYS_HF_STATUS } from "../constants";
 import { useFetchData } from "../hooks/useFetchData";
+import { getTimeDifferenceInDaysFromToday } from "@openimis/fe-core";
 
 const useStyles = makeStyles((theme) => ({
   container: theme.page,
   messageTitle: {
     textAlign: "center",
     color: "red",
+    fontSize: "16px"
   },
   messageDate: {
     textAlign: "center",
+    fontSize: "16px",
   },
+  healthFacilityLongTimeActive: {
+    textAlign: "center",
+  },
+  healthFacilityMediumTimeActive: {
+    textAlign: "center",
+    color: "gray",
+  },
+  healthFacilityShortTimeActive: {
+    textAlign: "center",
+    color: "red",
+  },
+  messageNotice: {
+    fontSize: "16px"
+  }
 }));
 
 const HomePageContainer = () => {
   const modulesManager = useModulesManager();
-  const { formatMessage, formatMessageWithValues } = useTranslations(
-    MODULE_NAME,
-    modulesManager
+  const userHealthFacility = useSelector(
+    (state) => state?.loc?.userHealthFacilityFullPath
   );
+  const { formatMessage, formatMessageWithValues, formatDateFromISO } =
+    useTranslations(MODULE_NAME, modulesManager);
   const showHomeMessage = modulesManager.getConf(
     "fe-home",
     "HomePageContainer.showHomeMessage",
@@ -39,6 +59,11 @@ const HomePageContainer = () => {
     "fe-home",
     "HomePageContainer.homeMessageURL",
     DEFAULT.HOME_MESSAGE_URL
+  );
+  const showHealthFacilityMessage = modulesManager.getConf(
+    "fe-home",
+    "HomePageContainer.showHealthFacilityMessage",
+    DEFAULT.SHOW_HEALTH_FACILITY_MESSAGE
   );
 
   const { user } = useUserQuery();
@@ -53,6 +78,18 @@ const HomePageContainer = () => {
     return null;
   }
 
+  const dateToCheck = new Date(userHealthFacility?.contractEndDate ?? null);
+  const timeDelta = getTimeDifferenceInDaysFromToday(dateToCheck);
+  const getHealthFacilityStatus = (timeDelta) => {
+    if (timeDelta > DAYS_HF_STATUS.DAYS_LONG_TIME_ACTIVE) {
+      return classes.healthFacilityLongTimeActive;
+    } else if (timeDelta > DAYS_HF_STATUS.DAYS_MEDIUM_TIME_ACTIVE) {
+      return classes.healthFacilityMediumTimeActive;
+    } else {
+      return classes.healthFacilityShortTimeActive;
+    }
+  };
+
   return (
     <Grid container className={classes.container} spacing={2}>
       <Grid item xs={12}>
@@ -65,6 +102,21 @@ const HomePageContainer = () => {
           </Typography>
         </Box>
       </Grid>
+      {showHealthFacilityMessage && (
+        <Grid item xs={12}>
+          <h2 className={getHealthFacilityStatus(timeDelta)}>
+            {userHealthFacility
+              ? formatMessageWithValues(
+                  "HomePageContainer.healthFacilityStatus",
+                  {
+                    date: `${formatDateFromISO(dateToCheck)}`,
+                    days: `${timeDelta}`,
+                  }
+                )
+              : formatMessage("HomePageContainer.noHealthFacilityAssigned")}
+          </h2>
+        </Grid>
+      )}
       {showHomeMessage && (
         <Grid item xs={12}>
           <ProgressOrError progress={messageLoading} error={messageError} />
@@ -72,7 +124,10 @@ const HomePageContainer = () => {
             {formatMessage("HomePageContainer.messageTitle")}
           </h3>
           <p className={classes.messageDate}> {messageData?.date} </p>
-          <div dangerouslySetInnerHTML={{ __html: messageData?.notice }} />
+          <div
+            className={classes.messageNotice}
+            dangerouslySetInnerHTML={{ __html: messageData?.notice }}
+          />
         </Grid>
       )}
       <Contributions contributionKey="home.HomePage.Blocks" user={user} />
